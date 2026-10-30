@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="A retro pixel-art jumping adventure game.">
+  <title>Super Jump Adventure</title>
+  <link rel="stylesheet" href="style.css">
+  <script src="script.js" defer></script>
+</head>
+<body>
+  <main class="page">
+    <header class="topbar">
+      <a class="brand" href="#" aria-label="Super Jump Adventure home">
+        <span class="brand-icon">★</span>
+        <span>SUPER JUMP <em>ADVENTURE</em></span>
+      </a>
+      <div class="top-note">A RETRO PIXEL ADVENTURE</div>
+    </header>
+
+    <section class="game-shell" aria-label="Super Jump Adventure game">
+      <div class="game-heading">
+        <div>
+          <p class="eyebrow">WORLD 1-1</p>
+          <h1>Super Jump Adventure</h1>
+        </div>
+        <div class="scoreboard" aria-live="polite">
+          <div><span class="score-label">SCORE</span><strong id="score">00000</strong></div>
+          <div><span class="score-label">BEST</span><strong id="best-score">00000</strong></div>
+          <div><span class="score-label">COINS</span><strong id="coin-count">0</strong></div>
+        </div>
+      </div>
+
+      <div class="game-frame">
+        <canvas id="game-canvas" width="960" height="420"
+                aria-label="Game area. Press Space or Arrow Up to jump."></canvas>
+
+        <div class="game-overlay" id="game-overlay">
+          <div class="overlay-card">
+            <div class="pixel-star">★</div>
+            <p class="overlay-kicker" id="overlay-kicker">READY, PLAYER ONE?</p>
+            <h2 id="overlay-title">LET'S JUMP!</h2>
+            <p id="overlay-message">Jump over pipes and enemies, collect coins, and see how far you can go.</p>
+            <button id="start-button" class="start-button" type="button">START GAME <span>▶</span></button>
+            <p class="controls-hint">SPACE / ↑ TO JUMP</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="game-footer">
+        <p><span class="keycap">SPACE</span> or <span class="keycap">↑</span> JUMP <span class="footer-divider">•</span> <span class="keycap">P</span> PAUSE</p>
+        <button id="sound-button" class="sound-button" type="button" aria-pressed="true">♫ SOUND: ON</button>
+      </div>
+    </section>
+
+    <section class="how-to-play">
+      <div class="section-title"><span>★</span><h2>HOW TO PLAY</h2></div>
+      <div class="instructions">
+        <article><span class="instruction-icon">⬆</span><div><h3>JUMP</h3><p>Press SPACE or the UP arrow to leap over obstacles.</p></div></article>
+        <article><span class="instruction-icon coin-icon">●</span><div><h3>COLLECT COINS</h3><p>Grab golden coins to add bonus points to your score.</p></div></article>
+        <article><span class="instruction-icon">♥</span><div><h3>KEEP RUNNING</h3><p>The game gets faster as your score increases. Avoid every obstacle!</p></div></article>
+      </div>
+    </section>
+
+    <footer class="site-footer">BUILT WITH HTML · CSS · JAVASCRIPT <span>—</span> INSERT COIN TO PLAY</footer>
+  </main>
+</body>
+</html>
