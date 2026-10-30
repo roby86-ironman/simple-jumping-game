@@ -62,8 +62,20 @@ h1 { margin: 0; font-size: clamp(20px, 3vw, 31px); font-weight: 900; letter-spac
   border-radius: 7px;
   background: #8bd7f7;
   box-shadow: inset 0 0 0 4px rgba(255,255,255,.28);
+  touch-action: manipulation;
 }
-#game-canvas { display: block; width: 100%; height: auto; image-rendering: pixelated; }
+#game-canvas {
+  display: block;
+  width: 100%;
+  height: auto;
+  aspect-ratio: 960 / 420;
+  image-rendering: -moz-crisp-edges;
+  image-rendering: pixelated;
+  image-rendering: crisp-edges;
+  touch-action: manipulation;
+  user-select: none;
+  -webkit-user-select: none;
+}
 
 .game-overlay {
   position: absolute;

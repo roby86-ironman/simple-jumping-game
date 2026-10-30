@@ -46,7 +46,26 @@ let gameState = "ready";
 let soundEnabled = true;
 let audioContext = null;
 let worldOffset = 0;
-let bestScore = Number(localStorage.getItem(STORAGE_KEY)) || 0;
+let gameOverTimestamp = 0;
+
+function getStoredBestScore() {
+  try {
+    const stored = localStorage.getItem(STORAGE_KEY);
+    return Number(stored) || 0;
+  } catch (err) {
+    return 0;
+  }
+}
+
+function saveBestScore(value) {
+  try {
+    localStorage.setItem(STORAGE_KEY, String(value));
+  } catch (err) {
+    // Ignore storage restrictions
+  }
+}
+
+let bestScore = getStoredBestScore();
 
 bestScoreElement.textContent = formatScore(bestScore);
 
@@ -64,26 +83,63 @@ function createPlayer() {
   };
 }
 
-startButton.addEventListener("click", startGame);
+function handleOverlayAction() {
+  if (gameState === "paused") {
+    togglePause();
+  } else {
+    startGame();
+  }
+}
+
+startButton.addEventListener("click", handleOverlayAction);
 soundButton.addEventListener("click", toggleSound);
 
 document.addEventListener("keydown", (event) => {
   if (event.code === "Space" || event.code === "ArrowUp") {
     event.preventDefault();
-    handleJumpInput();
+    if (gameState === "paused") {
+      togglePause();
+    } else {
+      handleJumpInput();
+    }
   }
 
   if (event.code === "KeyP") {
     togglePause();
   }
 
-  if (event.code === "Enter" && (gameState === "ready" || gameState === "gameover")) {
-    startGame();
+  if (event.code === "Enter") {
+    if (gameState === "paused") {
+      togglePause();
+    } else if (gameState === "ready" || gameState === "gameover") {
+      if (gameState === "gameover" && Date.now() - gameOverTimestamp < 250) {
+        return;
+      }
+      startGame();
+    }
   }
 });
 
-canvas.addEventListener("pointerdown", () => {
-  handleJumpInput();
+const gameFrame = document.querySelector(".game-frame");
+if (gameFrame) {
+  gameFrame.addEventListener("pointerdown", (event) => {
+    if (event.target === startButton || event.target.closest("#start-button")) return;
+    if (gameState === "running") {
+      event.preventDefault();
+      handleJumpInput();
+    }
+  });
+} else {
+  canvas.addEventListener("pointerdown", (event) => {
+    event.preventDefault();
+    handleJumpInput();
+  });
+}
+
+document.addEventListener("visibilitychange", () => {
+  if (document.hidden && gameState === "running") {
+    togglePause();
+  }
 });
 
 
@@ -117,7 +173,7 @@ function startGame() {
 function togglePause() {
   if (gameState === "running") {
     gameState = "paused";
-    showOverlay("PAUSED", "TAKE A BREATHER!", "Press P to continue your adventure.", "RESUME");
+    showOverlay("PAUSED", "TAKE A BREATHER!", "Press P, Space, or click Resume to continue.", "RESUME");
     if (animationId !== null) {
       cancelAnimationFrame(animationId);
       animationId = null;
@@ -134,18 +190,20 @@ function endGame() {
   if (gameState !== "running") return;
 
   gameState = "gameover";
+  gameOverTimestamp = Date.now();
   playSound("hit");
 
   const finalScore = Math.floor(score);
-  if (finalScore > bestScore) {
+  const isNewBest = finalScore > bestScore;
+  if (isNewBest) {
     bestScore = finalScore;
-    localStorage.setItem(STORAGE_KEY, String(bestScore));
+    saveBestScore(bestScore);
   }
 
   bestScoreElement.textContent = formatScore(bestScore);
   showOverlay(
     "GAME OVER",
-    "OH NO! YOU GOT HIT!",
+    isNewBest && finalScore > 0 ? "NEW BEST SCORE! ★" : "OH NO! YOU GOT HIT!",
     `You scored ${finalScore} points and collected ${coinCount} coins. Try again!`,
     "PLAY AGAIN"
   );
@@ -154,7 +212,13 @@ function endGame() {
 
 
 function handleJumpInput() {
-  if (gameState === "ready" || gameState === "gameover") {
+  if (gameState === "ready") {
+    startGame();
+    return;
+  }
+
+  if (gameState === "gameover") {
+    if (Date.now() - gameOverTimestamp < 250) return;
     startGame();
     return;
   }
@@ -336,9 +400,10 @@ function checkCollisions() {
 
 
   for (const coin of coins) {
+    const bob = Math.sin(coin.phase) * 4;
     const coinBox = {
       x: coin.x - coin.radius,
-      y: coin.y - coin.radius,
+      y: coin.y + bob - coin.radius,
       width: coin.radius * 2,
       height: coin.radius * 2
     };
@@ -349,7 +414,7 @@ function checkCollisions() {
       score += 50;
       updateScoreboard();
       playSound("coin");
-      createCoinParticles(coin.x, coin.y);
+      createCoinParticles(coin.x, coin.y + bob);
     }
   }
 }
@@ -645,12 +710,14 @@ function toggleSound() {
 function playSound(type) {
   if (!soundEnabled) return;
 
+  try {
+    const AudioContextClass = window.AudioContext || window.webkitAudioContext;
+    if (!AudioContextClass) return;
 
-  const AudioContextClass = window.AudioContext || window.webkitAudioContext;
-  if (!AudioContextClass) return;
-
-  if (!audioContext) audioContext = new AudioContextClass();
-  if (audioContext.state === "suspended") audioContext.resume();
+    if (!audioContext) audioContext = new AudioContextClass();
+    if (audioContext.state === "suspended") {
+      audioContext.resume().catch(() => {});
+    }
 
   const now = audioContext.currentTime;
   const oscillator = audioContext.createOscillator();
@@ -690,6 +757,9 @@ function playSound(type) {
 
   oscillator.start(now);
   oscillator.stop(now + duration + 0.02);
+  } catch (err) {
+    // Silently continue if Web Audio is restricted
+  }
 }
 
 
